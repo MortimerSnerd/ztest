@@ -56,6 +56,7 @@ pub fn main() !void {
     st.setup();
 
     // create vertex buffer with triangle vertices
+    // Solid color example.
     const vertices = [_]f32 {
         // positions         colors
          0.0,  3,   3,     1.0, 0.0, 0.0, 1.0,
@@ -68,6 +69,40 @@ pub fn main() !void {
         }),
     });
 
+    // Textured ground plane
+    const gpverts = [_]f32 {
+        -5, 0, -5,   0, 1, 0,  0, 0, 
+        5,  0, -5,   0, 1, 0,  5, 0, 
+        5,  0,  5,   0, 1, 0,  5, 5, 
+        -5, 0,  5,   0, 1, 0,  0, 5, 
+    };
+    const gpix = [_]u16 {
+        1, 0, 2,  2, 0, 3
+    };
+
+    // create a small checker-board texture
+    const pixels = [4*4]u32 {
+        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+        0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000,
+        0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+    };
+    var img_desc: sg.ImageDesc = .{
+        .width = 4,
+        .height = 4,
+    };
+    img_desc.data.subimage[0][0] = sg.asRange(pixels);
+    const txbuf = try rend.addBuffer(.{
+        .buffer = sg.makeBuffer(.{
+            .data = sg.asRange(gpverts),
+        }), 
+        .idx_buffer = sg.makeBuffer(.{
+            .type = .INDEXBUFFER,
+            .data = sg.asRange(gpix), 
+        }),
+        .tx0 = sg.makeImage(img_desc),
+    });
+
     var drawables = [_]mr.Drawable{
         .{
             .buf = tbuf, 
@@ -75,6 +110,12 @@ pub fn main() !void {
             .base_element = 0, 
             .num_elements = 3
         },
+        .{
+            .buf = txbuf, 
+            .pipeline = rend.pl_v_tx_n,
+            .base_element = 0, 
+            .num_elements = 6,
+        }
     };
 
     const eyeheight = 2.0;
@@ -137,12 +178,12 @@ pub fn main() !void {
 
             // Act on input
             const mmove = kmap.getMouseMove();
-            const pitch_range = std.math.pi * 0.5;
+            const pitch_range = std.math.pi * 0.4;
 
             camrot = camrot - mmove.x * rotspeed * tick.Length;
-//          campitch = campitch - mmove.y * rotspeed * tick.Length;
-//          campitch = std.math.max(-pitch_range,
-//                                  std.math.min(pitch_range, campitch));
+            campitch = campitch - mmove.y * rotspeed * tick.Length;
+            campitch = std.math.max(-pitch_range,
+                                    std.math.min(pitch_range, campitch));
             var mv = Vec3.zero;
 
             if (kmap.isPressed(.StrafeLeft)) {
@@ -173,7 +214,7 @@ pub fn main() !void {
             const aspect = @intToFloat(f32, w) / @intToFloat(f32, h);
             const camdir = getFwd(camrot, campitch);
             const look = Mat4.createLook(campos, camdir, Vec3.unitY);
-            const pers = Mat4.createPerspective(zlm.toRadians(70.0), aspect, 0.1, 10.0);
+            const pers = Mat4.createPerspective(zlm.toRadians(70.0), aspect, 0.1, 60.0);
 
             rend.ublock.mvp = look.mul(pers);
             rend.draw(w, h, drawables[0..]);

@@ -75,6 +75,9 @@ pub const RenderState = struct {
     // Index for common pipeline for rendering solid colors in 3d.
     pl_3d_color: PipeIx = undefined,
 
+    // Pipeline for 3d textured geometry with normals.
+    pl_v_tx_n: PipeIx = undefined,
+
     // Solid color shader.
     colorShader: sg.Shader = undefined,
 
@@ -117,6 +120,56 @@ pub const RenderState = struct {
         p1desc.layout.attrs[0].format = .FLOAT3;
         p1desc.layout.attrs[1].format = .FLOAT4;
         rv.pl_3d_color = try rv.addPipeline(p1desc);
+        rv.pl_v_tx_n = try rv.addVTxNPipeline();
+    }
+
+    pub fn addVTxNPipeline(s: *RenderState) !PipeIx {
+        const vs = 
+            \\ #version 330
+            \\ uniform mat4 mvp;
+            \\ layout(location = 0) in vec3 position;
+            \\ layout(location = 1) in vec3 normal;
+            \\ layout(location = 2) in vec2 tc;
+            \\ out vec2 uv;
+            \\
+            \\ void main() {
+            \\   gl_Position = mvp * vec4(position, 1);
+            \\   uv = tc;
+            \\ }
+            ;
+        const fs = 
+            \\ #version 330
+            \\ uniform sampler2D tex;
+            \\ in vec2 uv;
+            \\ out vec4 frag_color;
+            \\ void main() {
+            \\   frag_color = texture2D(tex, uv);
+            \\ }
+            ;
+
+        var desc = try mkShaderDesc(vs, fs);
+
+        desc.fs.images[0].type = ._2D;
+        desc.fs.images[0].name = "tex";
+        setStdUniforms(&desc);
+        const shd = sg.makeShader(desc);
+
+        var d = sg.PipelineDesc{
+            .shader = shd, 
+            .index_type = .UINT16,
+            .depth_stencil = .{
+                .depth_compare_func = .LESS_EQUAL,
+                .depth_write_enabled = true,
+            },
+            .rasterizer = .{
+                .cull_mode = .BACK,
+            },
+        };
+        d.layout.attrs[0].format = .FLOAT3;
+        d.layout.attrs[1].format = .FLOAT3;
+        d.layout.attrs[2].format = .FLOAT2;
+
+        return s.addPipeline(d);
     }
 
     pub fn addPipeline(s: *RenderState, pd: sg.PipelineDesc) !PipeIx {
