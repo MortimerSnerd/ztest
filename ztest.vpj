@@ -23,7 +23,7 @@
                 CaptureOutputWith="ProcessBuffer"
                 SaveOption="SaveWorkspaceFiles"
                 RunFromDir="%rw">
-                <Exec CmdLine="zig build"/>
+                <Exec CmdLine="zig build --color on"/>
             </Target>
             <Target
                 Name="Rebuild"
@@ -44,7 +44,9 @@
                 Name="Execute"
                 MenuCaption="E&amp;xecute"
                 SaveOption="SaveNone"
-                RunFromDir="%rw">
+                RunFromDir="%rw"
+                CaptureOutputWith="ProcessBuffer"
+                ClearProcessBuffer="1">
                 <Exec CmdLine="zig-cache/bin/ztest"/>
             </Target>
         </Menu>
