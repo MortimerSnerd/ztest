@@ -131,19 +131,22 @@ pub const RenderState = struct {
             \\ layout(location = 1) in vec3 normal;
             \\ layout(location = 2) in vec2 tc;
             \\ out vec2 uv;
+            \\ out vec4 ncolor;
             \\
             \\ void main() {
             \\   gl_Position = mvp * vec4(position, 1);
             \\   uv = tc;
+            \\   ncolor = vec4(1, 1, 1, 1) * max(0.3, dot(normal, vec3(0, 0.707, 0.707)));
             \\ }
             ;
         const fs = 
             \\ #version 330
             \\ uniform sampler2D tex;
             \\ in vec2 uv;
+            \\ in vec4 ncolor;
             \\ out vec4 frag_color;
             \\ void main() {
-            \\   frag_color = texture2D(tex, uv);
+            \\   frag_color = texture2D(tex, uv) * ncolor;
             \\ }
             ;
 

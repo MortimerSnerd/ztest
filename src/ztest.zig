@@ -75,9 +75,21 @@ pub fn main() !void {
         5,  0, -5,   0, 1, 0,  5, 0, 
         5,  0,  5,   0, 1, 0,  5, 5, 
         -5, 0,  5,   0, 1, 0,  0, 5, 
+
+        -5, 0, -5,   0, 0, -1,  0, 0, 
+        5,  0, -5,   0, 0, -1,  5, 0, 
+        5,  5, -5,   0, 0, -1,  5, 2.5, 
+        -5, 5, -5,   0, 0, -1,  0, 2.5, 
+
+        -5, 0,  5,   0, 0,  1,  0, 0, 
+        5,  0,  5,   0, 0,  1,  5, 0, 
+        5,  5,  5,   0, 0,  1,  5, 2.5, 
+        -5, 5,  5,   0, 0,  1,  0, 2.5, 
     };
     const gpix = [_]u16 {
-        1, 0, 2,  2, 0, 3
+        1, 0, 2,  2, 0, 3, 
+        4, 5, 6,  4, 6, 7,
+        9, 8, 10,  10, 8, 11,
     };
 
     // create a small checker-board texture
@@ -114,7 +126,7 @@ pub fn main() !void {
             .buf = txbuf, 
             .pipeline = rend.pl_v_tx_n,
             .base_element = 0, 
-            .num_elements = 6,
+            .num_elements = gpix.len,
         }
     };
 
@@ -130,7 +142,7 @@ pub fn main() !void {
     var kmap = ctrl.ControlState.init(); 
     defer kmap.deinit();
 
-    const mvspeed = 2.0;
+    const mvspeed = 4.0;
     const rotspeed = 0.1;
 
     kmap.captureMouse();
@@ -138,7 +150,6 @@ pub fn main() !void {
         const dTd = st.sec(st.laptime(&frametime));
         const dT = @floatCast(f32, dTd);
         var ticksReady = tickstate.numTicksReady(dTd);
-
 
         while (ticksReady > 0) {
             ticksReady -= 1;
